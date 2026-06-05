@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EmployeeManagement.Models
@@ -9,27 +8,28 @@ namespace EmployeeManagement.Models
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Name is required")]
-        [StringLength(50)]
-        [Column("Name")]
+        [StringLength(50, MinimumLength = 3,
+            ErrorMessage = "Name should be between 3 and 50 characters")]
         public string Name { get; set; }
 
-        [Required]
-        [Range(1000, 1000000)]
+        [Required(ErrorMessage = "Salary is required")]
+        [Range(1000, 1000000,
+            ErrorMessage = "Salary must be between 1000 and 1000000")]
         public float Salary { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Location is required")]
         [StringLength(100)]
         public string Location { get; set; }
 
-        [Required]
-        [EmailAddress]
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid Email Format")]
         public string Email { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Department is required")]
         [StringLength(50)]
         public string Department { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Qualification is required")]
         [StringLength(50)]
         public string Qualification { get; set; }
 
