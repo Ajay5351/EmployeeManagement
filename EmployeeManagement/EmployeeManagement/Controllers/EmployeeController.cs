@@ -21,5 +21,18 @@ namespace EmployeeManagement.Controllers
             var employees = await _employeeRepository.GetAllEmployees();
             return Ok(employees);
         }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetEmployeeById(int id)
+        {
+            var employee = await _employeeRepository.GetEmployeeById(id);
+            if (employee == null)
+            {
+                return NotFound();
+            }
+            return Ok(employee);
+        }
+
+
     }
 }
