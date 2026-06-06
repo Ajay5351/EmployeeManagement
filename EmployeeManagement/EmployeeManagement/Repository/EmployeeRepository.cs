@@ -17,12 +17,14 @@ namespace EmployeeManagement.Repository
 
         public async Task<List<Employee>> GetAllEmployees()
         {
-            return await _context.Employees.ToListAsync();
+            var employees = await _context.Employees.ToListAsync();
+            return _mapper.Map<List<Employee>>(employees);
         }
 
         public async Task<Employee?> GetEmployeeById(int id)
         {
-            return await _context.Employees.FindAsync(id);
+            var employee = await _context.Employees.FindAsync(id);
+            return _mapper.Map<Employee?>(employee);
         }
 
         public async Task<Employee> AddEmployee(Employee employee)

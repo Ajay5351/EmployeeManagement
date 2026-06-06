@@ -29,7 +29,7 @@ namespace EmployeeManagement.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetEmployeeById(int id)
+        public async Task<IActionResult> GetEmployeeById([FromRoute] int id)
         {
             var employee = await _employeeRepository.GetEmployeeById(id);
 
@@ -41,7 +41,7 @@ namespace EmployeeManagement.Controllers
             return Ok(employee);
         }
 
-        [HttpPost]
+        [HttpPost("")]
         public async Task<IActionResult> AddEmployee([FromBody] Employee employee)
         {
             if (!ModelState.IsValid)
@@ -66,7 +66,7 @@ namespace EmployeeManagement.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateEmployee(int id, [FromBody] Employee employee)
+        public async Task<IActionResult> UpdateEmployee([FromRoute] int id, [FromBody] Employee employee)
         {
             if (!ModelState.IsValid)
             {
@@ -85,6 +85,7 @@ namespace EmployeeManagement.Controllers
 
                 return Ok(result);
             }
+
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
@@ -92,13 +93,14 @@ namespace EmployeeManagement.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteEmployeeById(int id)
+        public async Task<IActionResult> DeleteEmployeeById([FromRoute] int id)
         {
             try
             {
                 await _employeeRepository.DeleteEmployee(id);
                 return NoContent();
             }
+
             catch (Exception ex)
             {
                 return NotFound(ex.Message);
