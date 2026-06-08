@@ -1,7 +1,9 @@
 using AutoMapper;
 using AutoMapper.Configuration;
 using EmployeeManagement.Data;
+using EmployeeManagement.Models;
 using EmployeeManagement.Repository;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,8 +13,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<EmployeeContext>(options =>
                options.UseSqlServer(builder.Configuration.GetConnectionString("EmployeeDB")));
 
+builder.Services.AddIdentity<ApplicationModel, IdentityRole>()
+    .AddEntityFrameworkStores<EmployeeContext>()
+    .AddDefaultTokenProviders();
+
 builder.Services.AddControllers();
 builder.Services.AddTransient<IEmployeeRepository, EmployeeRepository>();
+builder.Services.AddTransient<IAccountRepository, AccountRepository>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 
