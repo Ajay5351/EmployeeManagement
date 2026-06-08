@@ -3,8 +3,11 @@ using AutoMapper.Configuration;
 using EmployeeManagement.Data;
 using EmployeeManagement.Models;
 using EmployeeManagement.Repository;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +19,29 @@ builder.Services.AddDbContext<EmployeeContext>(options =>
 builder.Services.AddIdentity<ApplicationModel, IdentityRole>()
     .AddEntityFrameworkStores<EmployeeContext>()
     .AddDefaultTokenProviders();
+
+builder.Services.AddAuthentication(option =>
+{
+    option.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    option.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    option.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+
+           .AddJwtBearer(option =>
+           {
+               option.SaveToken = true;
+               option.RequireHttpsMetadata = false;
+
+               option.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters()
+               {
+                   ValidateIssuer = true,
+                   ValidateAudience = true,
+                   ValidateIssuerSigningKey = true,
+                   ValidAudience = builder.Configuration["Jwt:ValidAudience"],
+                   ValidIssuer = builder.Configuration["Jwt:ValidIssuer"],
+                   IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]))
+               };
+           });
 
 builder.Services.AddControllers();
 builder.Services.AddTransient<IEmployeeRepository, EmployeeRepository>();
@@ -38,6 +64,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

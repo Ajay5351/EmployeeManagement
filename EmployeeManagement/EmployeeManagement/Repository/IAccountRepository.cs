@@ -6,5 +6,6 @@ namespace EmployeeManagement.Repository
     public interface IAccountRepository
     {
         Task<IdentityResult> SignupAsync(SignupModel signupModel);
+        Task<string> LoginAsync(SignInModel signInModel);
     }
 }

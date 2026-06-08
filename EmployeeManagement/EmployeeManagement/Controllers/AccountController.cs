@@ -1,6 +1,5 @@
 ﻿using EmployeeManagement.Models;
 using EmployeeManagement.Repository;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EmployeeManagement.Controllers
@@ -24,6 +23,20 @@ namespace EmployeeManagement.Controllers
             if (result.Succeeded)
             {
                 return Ok(result.Succeeded);
+            }
+
+            return Unauthorized();
+        }
+
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] SignInModel signInModel)
+        {
+            var result = await _accountRepository.LoginAsync(signInModel);
+
+            if (result != null)
+            {
+                return Ok(result);
             }
 
             return Unauthorized();
