@@ -1,9 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EmployeeManagement.Models
 {
-    public class EmployeeModel
+    public class Employee
     {
         public int Id { get; set; }
 

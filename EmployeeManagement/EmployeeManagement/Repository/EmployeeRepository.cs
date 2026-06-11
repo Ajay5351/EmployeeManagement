@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using EmployeeManagement.Data;
+using EmployeeManagement.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace EmployeeManagement.Repository
@@ -7,54 +8,30 @@ namespace EmployeeManagement.Repository
     public class EmployeeRepository : IEmployeeRepository
     {
         private readonly EmployeeContext _context;
-        private readonly IMapper _mapper;
 
-        public EmployeeRepository(EmployeeContext context, IMapper mapper)
+        public EmployeeRepository(EmployeeContext context)
         {
             _context = context;
-            _mapper = mapper;
         }
 
         public async Task<List<Employee>> GetAllEmployees()
         {
-            var employees = await _context.Employees.ToListAsync();
-            return _mapper.Map<List<Employee>>(employees);
+             return await _context.Employees.ToListAsync();
         }
 
         public async Task<Employee?> GetEmployeeById(int id)
         {
-            var employee = await _context.Employees.FindAsync(id);
-            return _mapper.Map<Employee?>(employee);
+             return await _context.Employees.FindAsync(id);
         }
 
         public async Task<Employee> AddEmployee(Employee employee)
         {
-            if (employee == null)
-                throw new Exception("Employee data is required.");
-
-            if (string.IsNullOrWhiteSpace(employee.Name))
-                throw new Exception("Name is required.");
-
-            if (string.IsNullOrWhiteSpace(employee.Email))
-                throw new Exception("Email is required.");
-
-            if (string.IsNullOrWhiteSpace(employee.Department))
-                throw new Exception("Department is required.");
-
-            if (string.IsNullOrWhiteSpace(employee.Location))
-                throw new Exception("Location is required.");
-
-            if (string.IsNullOrWhiteSpace(employee.Qualification))
-                throw new Exception("Qualification is required.");
-
-            bool emailExists = await _context.Employees
-                .AnyAsync(x => x.Email == employee.Email);
+            bool emailExists = await _context.Employees.AnyAsync(x => x.Email == employee.Email);
 
             if (emailExists)
                 throw new Exception("Email already exists.");
 
             employee.CreatedDate = DateTime.UtcNow;
-            employee.UpdatedDate = DateTime.UtcNow;
 
             _context.Employees.Add(employee);
             await _context.SaveChangesAsync();
@@ -64,14 +41,9 @@ namespace EmployeeManagement.Repository
 
         public async Task<Employee> UpdateEmployee(Employee employee)
         {
-            var existingEmployee =
-                await _context.Employees.FindAsync(employee.Id);
+            var existingEmployee = await _context.Employees.FindAsync(employee.Id);
 
-            if (existingEmployee == null)
-                throw new Exception("Employee not found.");
-
-            bool emailExists = await _context.Employees
-                .AnyAsync(x => x.Email == employee.Email
+            bool emailExists = await _context.Employees.AnyAsync(x => x.Email == employee.Email
                             && x.Id != employee.Id);
 
             if (emailExists)

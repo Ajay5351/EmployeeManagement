@@ -1,4 +1,4 @@
-﻿using EmployeeManagement.Data;
+﻿using EmployeeManagement.Models;
 using EmployeeManagement.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -75,22 +75,18 @@ namespace EmployeeManagement.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (id != employee.Id)
-            {
-                return BadRequest("Employee ID mismatch.");
-            }
+            employee.Id = id;
 
             try
             {
-                var result =
-                    await _employeeRepository.UpdateEmployee(employee);
+                var updatedEmployee = await _employeeRepository.UpdateEmployee(employee);
 
-                return Ok(result);
+                return Ok(updatedEmployee);
             }
 
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(500, $"An error occurred while updating the employee: {ex.Message}");
             }
         }
 
