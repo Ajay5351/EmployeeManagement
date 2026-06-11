@@ -14,14 +14,66 @@ namespace EmployeeManagement.Repository
             _context = context;
         }
 
-        public async Task<List<Employee>> GetAllEmployees()
+        public async Task<PagedEmployeeResult> GetAllEmployees(string? term, string? sort, int page, int limit)
         {
-             return await _context.Employees.ToListAsync();
+            IQueryable<Employee> employees;
+
+            if (string.IsNullOrWhiteSpace(term))
+            {
+                employees = _context.Employees;
+            }
+            else
+            {
+                term = term.Trim().ToLower();
+
+                employees = _context.Employees.Where(employee =>
+                    employee.Name.ToLower().Contains(term) ||
+                    employee.Department.ToLower().Contains(term) ||
+                    employee.Location.ToLower().Contains(term));
+            }
+
+            // Sorting
+            if (!string.IsNullOrWhiteSpace(sort))
+            {
+                employees = sort.ToLower() switch
+                {
+                    "name" => employees.OrderBy(e => e.Name),
+                    "-name" => employees.OrderByDescending(e => e.Name),
+
+                    "salary" => employees.OrderBy(e => e.Salary),
+                    "-salary" => employees.OrderByDescending(e => e.Salary),
+
+                    "department" => employees.OrderBy(e => e.Department),
+                    "-department" => employees.OrderByDescending(e => e.Department),
+
+                    _ => employees.OrderBy(e => e.Id)
+                };
+            }
+            else
+            {
+                employees = employees.OrderBy(e => e.Id);
+            }
+
+            // Pagination
+            var totalCount = await employees.CountAsync();
+
+            var totalPages = (int)Math.Ceiling(totalCount / (double)limit);
+
+            var pagedEmployees = await employees.Skip((page - 1) * limit)
+                .Take(limit)
+                .ToListAsync();
+
+            return new PagedEmployeeResult
+            {
+                Employees = pagedEmployees,
+                TotalCount = totalCount,
+                TotalPages = totalPages
+            };
         }
 
         public async Task<Employee?> GetEmployeeById(int id)
         {
-             return await _context.Employees.FindAsync(id);
+            return await _context.Employees.FindAsync(id);
         }
 
         public async Task<Employee> AddEmployee(Employee employee)

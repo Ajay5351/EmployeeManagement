@@ -53,6 +53,9 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddMemoryCache();
+builder.Services.AddLazyCache();
+
 builder.Services.AddControllers();
 builder.Services.AddTransient<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddTransient<IAccountRepository, AccountRepository>();

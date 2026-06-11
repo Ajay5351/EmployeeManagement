@@ -1,7 +1,10 @@
-﻿using EmployeeManagement.Models;
+﻿using EmployeeManagement.Caching;
+using EmployeeManagement.Models;
 using EmployeeManagement.Repository;
+using LazyCache;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace EmployeeManagement.Controllers
 {
@@ -11,33 +14,66 @@ namespace EmployeeManagement.Controllers
     public class EmployeeController : ControllerBase
     {
         private readonly IEmployeeRepository _employeeRepository;
+        private readonly ICacheProvider _cacheProvider;
 
-        public EmployeeController(IEmployeeRepository employeeRepository)
+        public EmployeeController(IEmployeeRepository employeeRepository, ICacheProvider cacheProvider)
         {
             _employeeRepository = employeeRepository;
+            _cacheProvider = cacheProvider;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllEmployees()
+        public async Task<IActionResult> GetAllEmployees([FromQuery] string? term, [FromQuery] string? sort,
+        [FromQuery] int page = 1,
+        [FromQuery] int limit = 5)
         {
-            var employees = await _employeeRepository.GetAllEmployees();
+            string cacheKey = $"Employee_{term}_{sort}_{page}_{limit}";
 
-            if (employees == null || !employees.Any())
+            if (!_cacheProvider.TryGetValue(cacheKey, out PagedEmployeeResult? result))
             {
-                return NotFound("No employees found.");
+                result = await _employeeRepository.GetAllEmployees(term, sort, page, limit);
+
+                if (result == null)
+                {
+                    return NotFound("No employees found.");
+                }
+
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30),
+                    SlidingExpiration = TimeSpan.FromSeconds(30),
+                    Size = 1000
+                };
+
+                _cacheProvider.Set(cacheKey, result, cacheEntryOptions);
             }
 
-            return Ok(employees);
+            Response.Headers.Append("X-Total-Count", result!.TotalCount.ToString());
+            Response.Headers.Append("X-Total-Pages", result.TotalPages.ToString());
+
+            return Ok(result.Employees);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetEmployeeById([FromRoute] int id)
         {
-            var employee = await _employeeRepository.GetEmployeeById(id);
-
-            if (employee == null)
+            if (!_cacheProvider.TryGetValue(CacheKeys.Employee, out Employee? employee))
             {
-                return NotFound("Employee not found.");
+                employee = await _employeeRepository.GetEmployeeById(id);
+
+                if (employee == null)
+                {
+                    return NotFound($"Employee with Id {id} not found.");
+                }
+
+                var cacheEntryOptions = new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30),
+                    SlidingExpiration = TimeSpan.FromSeconds(30),
+                    Size = 1000
+                };
+
+                _cacheProvider.Set(CacheKeys.Employee, employee, cacheEntryOptions);
             }
 
             return Ok(employee);

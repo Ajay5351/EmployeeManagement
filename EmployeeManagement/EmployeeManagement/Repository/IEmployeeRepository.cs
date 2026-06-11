@@ -4,7 +4,8 @@ namespace EmployeeManagement.Repository
 {
     public interface IEmployeeRepository
     {
-        Task<List<Employee>> GetAllEmployees();
+        Task<PagedEmployeeResult> GetAllEmployees(string? term, string? sort, int page, int limit);
+
         Task<Employee?> GetEmployeeById(int id);
         Task<Employee> AddEmployee(Employee employee);
         Task<Employee> UpdateEmployee(Employee employee);
