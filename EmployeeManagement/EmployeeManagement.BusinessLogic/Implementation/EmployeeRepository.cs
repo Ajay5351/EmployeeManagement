@@ -93,13 +93,7 @@ namespace EmployeeManagement.BusinessLogic
         public async Task<Employee> UpdateEmployee(Employee employee)
         {
             var existingEmployee = await _context.Employees.FindAsync(employee.Id);
-
-            bool emailExists = await _context.Employees.AnyAsync(x => x.Email == employee.Email
-                            && x.Id != employee.Id);
-
-            if (emailExists)
-                throw new Exception("Email already exists.");
-
+           
             existingEmployee.Name = employee.Name;
             existingEmployee.Salary = employee.Salary;
             existingEmployee.Location = employee.Location;
