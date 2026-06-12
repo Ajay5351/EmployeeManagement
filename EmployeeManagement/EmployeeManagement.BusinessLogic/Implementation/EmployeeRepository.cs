@@ -1,9 +1,8 @@
-﻿using AutoMapper;
-using EmployeeManagement.Data;
+﻿using EmployeeManagement.DataAccess;
 using EmployeeManagement.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace EmployeeManagement.Repository
+namespace EmployeeManagement.BusinessLogic
 {
     public class EmployeeRepository : IEmployeeRepository
     {

@@ -1,12 +1,12 @@
-﻿using EmployeeManagement.Caching;
+﻿using EmployeeManagement.API.Caching;
 using EmployeeManagement.Models;
-using EmployeeManagement.Repository;
+using EmployeeManagement.BusinessLogic;
 using LazyCache;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace EmployeeManagement.Controllers
+namespace EmployeeManagement.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

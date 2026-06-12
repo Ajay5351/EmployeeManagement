@@ -1,6 +1,6 @@
 ﻿using EmployeeManagement.Models;
 
-namespace EmployeeManagement.Repository
+namespace EmployeeManagement.BusinessLogic
 {
     public interface IEmployeeRepository
     {

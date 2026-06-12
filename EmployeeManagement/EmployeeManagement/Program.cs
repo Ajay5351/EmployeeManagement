@@ -1,8 +1,6 @@
-using AutoMapper;
-using AutoMapper.Configuration;
-using EmployeeManagement.Data;
 using EmployeeManagement.Models;
-using EmployeeManagement.Repository;
+using EmployeeManagement.BusinessLogic;
+using EmployeeManagement.DataAccess;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

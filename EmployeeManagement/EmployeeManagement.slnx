@@ -1,3 +1,6 @@
 <Solution>
-  <Project Path="EmployeeManagement/EmployeeManagement.csproj" />
+  <Project Path="EmployeeManagement.BusinessLogic/EmployeeManagement.BusinessLogic.csproj" Id="6922b32a-b82e-4222-bb28-c5f2984971e1" />
+  <Project Path="EmployeeManagement.DataAccess/EmployeeManagement.DataAccess.csproj" Id="1b387b32-9d26-4795-83a0-49183db71412" />
+  <Project Path="EmployeeManagement.Models/EmployeeManagement.Models.csproj" Id="dadd2839-639d-42c0-b3ec-67e56c8a2be5" />
+  <Project Path="EmployeeManagement/EmployeeManagement.API.csproj" />
 </Solution>

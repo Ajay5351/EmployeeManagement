@@ -1,8 +1,8 @@
 ﻿using EmployeeManagement.Models;
-using EmployeeManagement.Repository;
+using EmployeeManagement.BusinessLogic;
 using Microsoft.AspNetCore.Mvc;
 
-namespace EmployeeManagement.Controllers
+namespace EmployeeManagement.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

@@ -1,11 +1,12 @@
 ﻿using EmployeeManagement.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace EmployeeManagement.Repository
+namespace EmployeeManagement.BusinessLogic
 {
     public class AccountRepository : IAccountRepository
     {

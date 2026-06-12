@@ -1,4 +1,4 @@
-﻿namespace EmployeeManagement.Caching
+﻿namespace EmployeeManagement.API.Caching
 {
     public static class CacheKeys
     {
