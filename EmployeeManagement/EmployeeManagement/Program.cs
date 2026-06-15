@@ -1,6 +1,7 @@
-using EmployeeManagement.Models;
 using EmployeeManagement.BusinessLogic;
+using EmployeeManagement.BusinessLogic.Implementation;
 using EmployeeManagement.DataAccess;
+using EmployeeManagement.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -11,11 +12,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddDbContext<EmployeeContext>(options =>
+builder.Services.AddDbContext<EmployeeDbContext>(options =>
                options.UseSqlServer(builder.Configuration.GetConnectionString("EmployeeDB")));
 
 builder.Services.AddIdentity<ApplicationModel, IdentityRole>()
-    .AddEntityFrameworkStores<EmployeeContext>()
+    .AddEntityFrameworkStores<EmployeeDbContext>()
     .AddDefaultTokenProviders();
 
 builder.Services.AddAuthentication(option =>
@@ -51,10 +52,15 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddControllers().AddNewtonsoftJson();
+
 builder.Services.AddMemoryCache();
 builder.Services.AddLazyCache();
 
-builder.Services.AddControllers();
+builder.Services.AddScoped<Filtering>();
+builder.Services.AddScoped<Sorting>();
+builder.Services.AddScoped<MemoryCaching>();
+builder.Services.AddScoped<Pagination>();
 builder.Services.AddTransient<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddTransient<IAccountRepository, AccountRepository>();
 

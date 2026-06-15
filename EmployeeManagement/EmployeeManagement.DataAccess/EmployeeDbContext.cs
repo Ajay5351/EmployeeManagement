@@ -4,13 +4,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EmployeeManagement.DataAccess
 {
-    public class EmployeeContext : IdentityDbContext<ApplicationModel>
+    public class EmployeeDbContext : IdentityDbContext<ApplicationModel>
     {
-        public EmployeeContext(DbContextOptions<EmployeeContext> options)
+        public EmployeeDbContext(DbContextOptions<EmployeeDbContext> options)
             : base(options)
         {
         }
 
-        public DbSet<Employee> Employees { get; set; }
+        public DbSet<EmployeeModel> Employees { get; set; }
     }
 }

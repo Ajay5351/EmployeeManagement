@@ -1,14 +1,15 @@
 ﻿using EmployeeManagement.Models;
+using Microsoft.AspNetCore.JsonPatch;
 
 namespace EmployeeManagement.BusinessLogic
 {
     public interface IEmployeeRepository
     {
-        Task<PagedEmployeeResult> GetAllEmployees(string? term, string? sort, int page, int limit);
-
-        Task<Employee?> GetEmployeeById(int id);
-        Task<Employee> AddEmployee(Employee employee);
-        Task<Employee> UpdateEmployee(Employee employee);
-        Task DeleteEmployee(int id);
+        Task<PagedEmployeeResult> GetAllEmployeesAsync(EmployeeRequestModel requestModel);
+        Task<EmployeeModel?> GetEmployeeByIdAsync(int id);
+        Task<EmployeeModel> AddEmployeeAsync(EmployeeModel employee);
+        Task<EmployeeModel> UpdateEmployeeAsync(EmployeeModel employee);
+        Task<EmployeeModel> PatchEmployeeAsync(int id, JsonPatchDocument<EmployeeModel> employee);
+        Task DeleteEmployeeAsync(int id);
     }
 }

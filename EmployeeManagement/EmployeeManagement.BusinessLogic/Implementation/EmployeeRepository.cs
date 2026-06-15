@@ -1,81 +1,48 @@
-﻿using EmployeeManagement.DataAccess;
+﻿using EmployeeManagement.BusinessLogic.Implementation;
+using EmployeeManagement.DataAccess;
 using EmployeeManagement.Models;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
 
 namespace EmployeeManagement.BusinessLogic
 {
     public class EmployeeRepository : IEmployeeRepository
     {
-        private readonly EmployeeContext _context;
+        private readonly EmployeeDbContext _context;
+        private readonly Filtering _filtering;
+        private readonly Sorting _sorting;
+        private readonly Pagination _pagination;
+        private readonly MemoryCaching _memoryCaching;
 
-        public EmployeeRepository(EmployeeContext context)
+        public EmployeeRepository(EmployeeDbContext context, Filtering filtering, Sorting sorting, Pagination pagination, MemoryCaching memoryCaching)
         {
             _context = context;
+            _filtering = filtering;
+            _sorting = sorting;
+            _pagination = pagination;
+            _memoryCaching = memoryCaching;
         }
 
-        public async Task<PagedEmployeeResult> GetAllEmployees(string? term, string? sort, int page, int limit)
+        public async Task<PagedEmployeeResult> GetAllEmployeesAsync(EmployeeRequestModel requestModel)
         {
-            IQueryable<Employee> employees;
+            IQueryable<EmployeeModel> employees = _context.Employees;
 
-            if (string.IsNullOrWhiteSpace(term))
-            {
-                employees = _context.Employees;
-            }
-            else
-            {
-                term = term.Trim().ToLower();
+            employees = _filtering.ApplyFiltering(employees, requestModel.Term);
 
-                employees = _context.Employees.Where(employee =>
-                    employee.Name.ToLower().Contains(term) ||
-                    employee.Department.ToLower().Contains(term) ||
-                    employee.Location.ToLower().Contains(term));
-            }
+            employees = _sorting.ApplySorting(employees, requestModel.Sort);
 
-            // Sorting
-            if (!string.IsNullOrWhiteSpace(sort))
-            {
-                employees = sort.ToLower() switch
-                {
-                    "name" => employees.OrderBy(e => e.Name),
-                    "-name" => employees.OrderByDescending(e => e.Name),
+            var pagedResult = await _pagination.ApplyPaginationAsync(employees, requestModel);
 
-                    "salary" => employees.OrderBy(e => e.Salary),
-                    "-salary" => employees.OrderByDescending(e => e.Salary),
-
-                    "department" => employees.OrderBy(e => e.Department),
-                    "-department" => employees.OrderByDescending(e => e.Department),
-
-                    _ => employees.OrderBy(e => e.Id)
-                };
-            }
-            else
-            {
-                employees = employees.OrderBy(e => e.Id);
-            }
-
-            // Pagination
-            var totalCount = await employees.CountAsync();
-
-            var totalPages = (int)Math.Ceiling(totalCount / (double)limit);
-
-            var pagedEmployees = await employees.Skip((page - 1) * limit)
-                .Take(limit)
-                .ToListAsync();
-
-            return new PagedEmployeeResult
-            {
-                Employees = pagedEmployees,
-                TotalCount = totalCount,
-                TotalPages = totalPages
-            };
+            return await _memoryCaching.GetAllEmployeesCacheAsync(requestModel, pagedResult);
         }
 
-        public async Task<Employee?> GetEmployeeById(int id)
+        public async Task<EmployeeModel?> GetEmployeeByIdAsync(int id)
         {
-            return await _context.Employees.FindAsync(id);
+            return await _memoryCaching.GetEmployeeByIdCacheAsync(id,
+                async () => await _context.Employees.FindAsync(id));
         }
 
-        public async Task<Employee> AddEmployee(Employee employee)
+        public async Task<EmployeeModel> AddEmployeeAsync(EmployeeModel employee)
         {
             bool emailExists = await _context.Employees.AnyAsync(x => x.Email == employee.Email);
 
@@ -90,16 +57,23 @@ namespace EmployeeManagement.BusinessLogic
             return employee;
         }
 
-        public async Task<Employee> UpdateEmployee(Employee employee)
+        public async Task<EmployeeModel> UpdateEmployeeAsync(EmployeeModel employee)
         {
-            var existingEmployee = await _context.Employees.FindAsync(employee.Id);
-           
-            existingEmployee.Name = employee.Name;
-            existingEmployee.Salary = employee.Salary;
-            existingEmployee.Location = employee.Location;
-            existingEmployee.Email = employee.Email;
-            existingEmployee.Department = employee.Department;
-            existingEmployee.Qualification = employee.Qualification;
+            employee.UpdatedDate = DateTime.UtcNow;
+
+            _context.Employees.Update(employee);
+
+            await _context.SaveChangesAsync();
+
+            return employee;
+        }
+
+        public async Task<EmployeeModel> PatchEmployeeAsync(int id, JsonPatchDocument<EmployeeModel> employee)
+        {
+            var existingEmployee = await _context.Employees.FindAsync(id);
+
+            employee.ApplyTo(existingEmployee);
+
             existingEmployee.UpdatedDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
@@ -107,12 +81,9 @@ namespace EmployeeManagement.BusinessLogic
             return existingEmployee;
         }
 
-        public async Task DeleteEmployee(int id)
+        public async Task DeleteEmployeeAsync(int id)
         {
             var employee = await _context.Employees.FindAsync(id);
-
-            if (employee == null)
-                throw new Exception("Employee not found.");
 
             _context.Employees.Remove(employee);
             await _context.SaveChangesAsync();

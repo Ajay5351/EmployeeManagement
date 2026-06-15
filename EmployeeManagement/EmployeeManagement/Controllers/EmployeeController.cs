@@ -1,10 +1,8 @@
-﻿using EmployeeManagement.API.Caching;
+﻿using EmployeeManagement.BusinessLogic;
 using EmployeeManagement.Models;
-using EmployeeManagement.BusinessLogic;
-using LazyCache;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace EmployeeManagement.API.Controllers
 {
@@ -14,73 +12,75 @@ namespace EmployeeManagement.API.Controllers
     public class EmployeeController : ControllerBase
     {
         private readonly IEmployeeRepository _employeeRepository;
-        private readonly ICacheProvider _cacheProvider;
 
-        public EmployeeController(IEmployeeRepository employeeRepository, ICacheProvider cacheProvider)
+        public EmployeeController(IEmployeeRepository employeeRepository)
         {
             _employeeRepository = employeeRepository;
-            _cacheProvider = cacheProvider;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllEmployees([FromQuery] string? term, [FromQuery] string? sort,
-        [FromQuery] int page = 1,
-        [FromQuery] int limit = 5)
+        public async Task<IActionResult> GetAllEmployeesAsync([FromBody] EmployeeRequestModel requestModel)
         {
-            string cacheKey = $"Employee_{term}_{sort}_{page}_{limit}";
-
-            if (!_cacheProvider.TryGetValue(cacheKey, out PagedEmployeeResult? result))
+            try
             {
-                result = await _employeeRepository.GetAllEmployees(term, sort, page, limit);
+                var result = await _employeeRepository.GetAllEmployeesAsync(requestModel);
 
-                if (result == null)
+                if (result == null || !result.Employees.Any())
                 {
                     return NotFound("No employees found.");
                 }
 
-                var cacheEntryOptions = new MemoryCacheEntryOptions()
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30),
-                    SlidingExpiration = TimeSpan.FromSeconds(30),
-                    Size = 1000
-                };
+                Response.Headers.Append(
+                    "X-Total-Count",
+                    result.TotalCount.ToString());
 
-                _cacheProvider.Set(cacheKey, result, cacheEntryOptions);
+                Response.Headers.Append(
+                    "X-Total-Pages",
+                    result.TotalPages.ToString());
+
+                return Ok(result.Employees);
             }
 
-            Response.Headers.Append("X-Total-Count", result!.TotalCount.ToString());
-            Response.Headers.Append("X-Total-Pages", result.TotalPages.ToString());
-
-            return Ok(result.Employees);
+            catch (Exception ex)
+            {
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    new
+                    {
+                        Message = "An error occurred while retrieving employees.",
+                        Error = ex.Message
+                    });
+            }
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetEmployeeById([FromRoute] int id)
+        public async Task<IActionResult> GetEmployeeByIdAsync([FromRoute] int id)
         {
-            if (!_cacheProvider.TryGetValue(CacheKeys.Employee, out Employee? employee))
+            try
             {
-                employee = await _employeeRepository.GetEmployeeById(id);
+                var employee = await _employeeRepository.GetEmployeeByIdAsync(id);
 
                 if (employee == null)
                 {
                     return NotFound($"Employee with Id {id} not found.");
                 }
 
-                var cacheEntryOptions = new MemoryCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30),
-                    SlidingExpiration = TimeSpan.FromSeconds(30),
-                    Size = 1000
-                };
-
-                _cacheProvider.Set(CacheKeys.Employee, employee, cacheEntryOptions);
+                return Ok(employee);
             }
 
-            return Ok(employee);
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new
+                    {
+                        Message = "An error occurred while retrieving employee details.",
+                        Error = ex.Message
+                    });
+            }
         }
 
         [HttpPost("")]
-        public async Task<IActionResult> AddEmployee([FromBody] Employee employee)
+        public async Task<IActionResult> AddEmployeeAsync([FromBody] EmployeeModel employee)
         {
             if (!ModelState.IsValid)
             {
@@ -90,21 +90,22 @@ namespace EmployeeManagement.API.Controllers
             try
             {
                 var result =
-                    await _employeeRepository.AddEmployee(employee);
+                    await _employeeRepository.AddEmployeeAsync(employee);
 
                 return CreatedAtAction(
-                    nameof(GetEmployeeById),
+                    nameof(GetEmployeeByIdAsync),
                     new { id = result.Id },
                     result);
             }
+
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(ex.Message); 
             }
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateEmployee([FromRoute] int id, [FromBody] Employee employee)
+        public async Task<IActionResult> UpdateEmployeeAsync([FromRoute] int id, [FromBody] EmployeeModel employee)
         {
             if (!ModelState.IsValid)
             {
@@ -115,7 +116,7 @@ namespace EmployeeManagement.API.Controllers
 
             try
             {
-                var updatedEmployee = await _employeeRepository.UpdateEmployee(employee);
+                var updatedEmployee = await _employeeRepository.UpdateEmployeeAsync(employee);
 
                 return Ok(updatedEmployee);
             }
@@ -126,13 +127,48 @@ namespace EmployeeManagement.API.Controllers
             }
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteEmployeeById([FromRoute] int id)
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> PatchEmployeeAsync(int id, [FromBody] JsonPatchDocument<EmployeeModel> employee)
         {
             try
             {
-                await _employeeRepository.DeleteEmployee(id);
+                var updatedEmployee = await _employeeRepository.PatchEmployeeAsync(id, employee);
+
+                return Ok(updatedEmployee);
+            }
+
+            catch (NullReferenceException)
+            {
+                return NotFound(new
+                {
+                    Message = $"Employee with Id {id} not found."
+                });
+            }
+
+            catch (Exception ex)
+            {
+                return NotFound(new
+                {
+                    Message = ex.Message
+                });
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteEmployeeByIdAsync([FromRoute] int id)
+        {
+            try
+            {
+                await _employeeRepository.DeleteEmployeeAsync(id);
                 return NoContent();
+            }
+
+            catch (NullReferenceException)
+            {
+                return NotFound(new
+                {
+                    Message = $"Employee with Id {id} not found."
+                });
             }
 
             catch (Exception ex)
