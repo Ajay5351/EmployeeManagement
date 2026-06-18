@@ -1,39 +1,32 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EmployeeManagement.Models
 {
     public class EmployeeModel
     {
+        [Key]
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "Name is required")]
-        [StringLength(50, MinimumLength = 3,
-            ErrorMessage = "Name should be between 3 and 50 characters")]
-        public string Name { get; set; }
+        [Column(TypeName = "nvarchar(50)")]
+        public string? Name { get; set; }
 
-        [Required(ErrorMessage = "Salary is required")]
-        [Range(1000, 1000000,
-            ErrorMessage = "Salary must be between 1000 and 1000000")]
-        public float Salary { get; set; }
+        public int Salary { get; set; }
 
-        [Required(ErrorMessage = "Location is required")]
-        [StringLength(100, MinimumLength = 3)]
-        public string Location { get; set; }
+        [Column(TypeName = "nvarchar(20)")]
+        public string? Location { get; set; }
 
-        [Required(ErrorMessage = "Email is required")]
-        [EmailAddress(ErrorMessage = "Invalid Email Format")]
-        public string Email { get; set; }
+        [Column(TypeName = "nvarchar(20)")]
+        public string? Email { get; set; }
 
-        [Required(ErrorMessage = "Department is required")]
-        [StringLength(50, MinimumLength = 3)]
-        public string Department { get; set; }
+        [Column(TypeName = "nvarchar(20)")]
+        public string? Department { get; set; }
 
-        [Required(ErrorMessage = "Qualification is required")]
-        [StringLength(50, MinimumLength = 3)]
-        public string Qualification { get; set; }
+        [Column(TypeName = "nvarchar(20)")]
+        public string? Qualification { get; set; }
 
-        public DateTime CreatedDate { get; set; }
+        public DateTime? CreatedDate { get; set; }
 
-        public DateTime UpdatedDate { get; set; }
+        public DateTime? UpdatedDate { get; set; }
     }
 }

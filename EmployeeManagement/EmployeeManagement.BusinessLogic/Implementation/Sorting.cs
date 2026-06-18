@@ -15,8 +15,8 @@ namespace EmployeeManagement.BusinessLogic.Implementation
                 "-salary" => employees.OrderByDescending(e => e.Salary),
 
                 "department" => employees.OrderBy(e => e.Department),
-
                 "-department" => employees.OrderByDescending(e => e.Department),
+
                 _ => employees.OrderBy(e => e.Id)
             };
         }

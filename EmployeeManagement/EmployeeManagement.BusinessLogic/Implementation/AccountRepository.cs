@@ -26,8 +26,7 @@ namespace EmployeeManagement.BusinessLogic
 
         public async Task<IdentityResult> SignupAsync(SignupModel signUpModel)
         {
-            var existingUser =
-                await _userManager.FindByEmailAsync(signUpModel.Email);
+            var existingUser = await _userManager.FindByEmailAsync(signUpModel.Email);
 
             if (existingUser != null)
                 throw new Exception("User already exists with this email.");

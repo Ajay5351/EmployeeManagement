@@ -19,162 +19,92 @@ namespace EmployeeManagement.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllEmployeesAsync([FromBody] EmployeeRequestModel requestModel)
+        public async Task<IActionResult> GetAllEmployeesAsync([FromBody] EmployeeRequestModel employeeRequest)
         {
-            try
+            var employees = await _employeeRepository.GetAllEmployeesAsync(employeeRequest);
+
+            if (employees == null || employees.Employees.Count == 0)
             {
-                var result = await _employeeRepository.GetAllEmployeesAsync(requestModel);
-
-                if (result == null || !result.Employees.Any())
-                {
-                    return NotFound("No employees found.");
-                }
-
-                Response.Headers.Append(
-                    "X-Total-Count",
-                    result.TotalCount.ToString());
-
-                Response.Headers.Append(
-                    "X-Total-Pages",
-                    result.TotalPages.ToString());
-
-                return Ok(result.Employees);
+                return NotFound("No employees found.");
             }
 
-            catch (Exception ex)
-            {
-                return StatusCode(
-                    StatusCodes.Status500InternalServerError,
-                    new
-                    {
-                        Message = "An error occurred while retrieving employees.",
-                        Error = ex.Message
-                    });
-            }
+            Response.Headers.Append("X-Total-Count", employees.Employees.Count().ToString());
+            Response.Headers.Append("X-Total-Pages", employees.TotalPages.ToString());
+
+            return Ok(employees.Employees);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetEmployeeByIdAsync([FromRoute] int id)
         {
-            try
+            var employee = await _employeeRepository.GetEmployeeByIdAsync(id);
+
+            if (employee == null)
             {
-                var employee = await _employeeRepository.GetEmployeeByIdAsync(id);
-
-                if (employee == null)
-                {
-                    return NotFound($"Employee with Id {id} not found.");
-                }
-
-                return Ok(employee);
+                return NotFound($"Employee with Id {id} not found.");
             }
 
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    new
-                    {
-                        Message = "An error occurred while retrieving employee details.",
-                        Error = ex.Message
-                    });
-            }
+            return Ok(employee);
         }
 
         [HttpPost("")]
-        public async Task<IActionResult> AddEmployeeAsync([FromBody] EmployeeModel employee)
+        public async Task<IActionResult> AddEmployeeAsync([FromBody] EmployeeCreateRequest employee)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            try
-            {
-                var result =
-                    await _employeeRepository.AddEmployeeAsync(employee);
+            bool isEmployeeExists = await _employeeRepository.IsEmployeeExistsAsync(employee.Email);
 
-                return CreatedAtAction(
-                    nameof(GetEmployeeByIdAsync),
-                    new { id = result.Id },
-                    result);
-            }
+            if (isEmployeeExists)
+                return Conflict($"An employee with email {employee.Email} already exists.");
 
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message); 
-            }
+            var createdEmployee = await _employeeRepository.AddEmployeeAsync(employee);
+            return Ok(createdEmployee);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateEmployeeAsync([FromRoute] int id, [FromBody] EmployeeModel employee)
+        public async Task<IActionResult> UpdateEmployeeAsync([FromRoute] int id, [FromBody] EmployeeUpdateRequest employee)
         {
-            if (!ModelState.IsValid)
+            var existingEmployee = await _employeeRepository.GetEmployeeByIdAsync(id);
+
+            if (existingEmployee == null)
             {
-                return BadRequest(ModelState);
+                return NotFound($"Employee with Id {id} not found.");
             }
 
-            employee.Id = id;
-
-            try
-            {
-                var updatedEmployee = await _employeeRepository.UpdateEmployeeAsync(employee);
-
-                return Ok(updatedEmployee);
-            }
-
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"An error occurred while updating the employee: {ex.Message}");
-            }
+            var updatedEmployee = await _employeeRepository.UpdateEmployeeAsync(existingEmployee, employee);
+            return Ok(updatedEmployee);
         }
 
         [HttpPatch("{id}")]
         public async Task<IActionResult> PatchEmployeeAsync(int id, [FromBody] JsonPatchDocument<EmployeeModel> employee)
         {
-            try
-            {
-                var updatedEmployee = await _employeeRepository.PatchEmployeeAsync(id, employee);
+            var existingEmployee = await _employeeRepository.GetEmployeeByIdAsync(id);
 
-                return Ok(updatedEmployee);
+            if (existingEmployee == null)
+            {
+                return NotFound($"Employee with Id {id} not found.");
             }
 
-            catch (NullReferenceException)
-            {
-                return NotFound(new
-                {
-                    Message = $"Employee with Id {id} not found."
-                });
-            }
+            var patchedEmployee = await _employeeRepository.PatchEmployeeAsync(existingEmployee, employee);
 
-            catch (Exception ex)
-            {
-                return NotFound(new
-                {
-                    Message = ex.Message
-                });
-            }
+            return Ok(patchedEmployee);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEmployeeByIdAsync([FromRoute] int id)
         {
-            try
+            var existingEmployee = await _employeeRepository.GetEmployeeByIdAsync(id);
+
+            if (existingEmployee == null)
             {
-                await _employeeRepository.DeleteEmployeeAsync(id);
-                return NoContent();
+                return NotFound($"Employee with Id {id} not found.");
             }
 
-            catch (NullReferenceException)
-            {
-                return NotFound(new
-                {
-                    Message = $"Employee with Id {id} not found."
-                });
-            }
-
-            catch (Exception ex)
-            {
-                return NotFound(ex.Message);
-            }
+            await _employeeRepository.DeleteEmployeeAsync(existingEmployee);
+            return Ok($"Employee with Id {id} deleted successfully.");
         }
     }
 }

@@ -7,9 +7,10 @@ namespace EmployeeManagement.BusinessLogic
     {
         Task<PagedEmployeeResult> GetAllEmployeesAsync(EmployeeRequestModel requestModel);
         Task<EmployeeModel?> GetEmployeeByIdAsync(int id);
-        Task<EmployeeModel> AddEmployeeAsync(EmployeeModel employee);
-        Task<EmployeeModel> UpdateEmployeeAsync(EmployeeModel employee);
-        Task<EmployeeModel> PatchEmployeeAsync(int id, JsonPatchDocument<EmployeeModel> employee);
-        Task DeleteEmployeeAsync(int id);
+        Task<EmployeeModel> AddEmployeeAsync(EmployeeCreateRequest employee);
+        Task<EmployeeModel> UpdateEmployeeAsync(EmployeeModel existingEmployee, EmployeeUpdateRequest updatedEmployee);
+        Task<EmployeeModel> PatchEmployeeAsync(EmployeeModel existingEmployee, JsonPatchDocument<EmployeeModel> employee);
+        Task DeleteEmployeeAsync(EmployeeModel employee);
+        Task<bool> IsEmployeeExistsAsync(string? email);
     }
 }

@@ -1,5 +1,7 @@
+using AutoMapper;
 using EmployeeManagement.BusinessLogic;
 using EmployeeManagement.BusinessLogic.Implementation;
+using EmployeeManagement.BusinessLogic.Mapping;
 using EmployeeManagement.DataAccess;
 using EmployeeManagement.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -53,6 +55,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddControllers().AddNewtonsoftJson();
+builder.Services.AddAutoMapper(typeof(EmployeeProfile).Assembly);
 
 builder.Services.AddMemoryCache();
 builder.Services.AddLazyCache();

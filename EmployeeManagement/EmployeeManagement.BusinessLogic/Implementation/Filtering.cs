@@ -10,6 +10,7 @@ namespace EmployeeManagement.BusinessLogic.Implementation
             {
                 return employees;
             }
+
             term = term.ToLower();
             return employees.Where(e =>
                 e.Name.ToLower().Contains(term) ||
